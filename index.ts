@@ -1,6 +1,37 @@
 import {Card, Cloze as Fill} from 'curtiz-parse-markdown';
+import {enumerate} from 'curtiz-utils';
 
 import * as ebisu from './ebisu';
+
+interface LocalToFromGlobal {
+  globalToLocalsMap: Map<string, string[]>;
+  localToGlobalMap: Map<string, string>;
+}
+interface KeyToEbisu {
+  keyToEbisuMap: Map<string, ebisu.Ebisu>;
+}
+interface KeyToQuiz {
+  keyToQuizzableMap: Map<string, Card|Fill>;
+}
+interface KeyTree {
+  keyTree: string[][]; // [[a,b,c], [x,y,z,w], [1,2,3,4,5]]
+}
+export const DEFAULT_EBISU_ALPHA_BETA = 2;
+export const DEFAULT_EBISU_HALFLIFE_HOURS = 0.25;
+
+export function initQuizDb({globalToLocalsMap, localToGlobalMap, keyToEbisuMap, keyToQuizzableMap, keyTree}: {
+  globalToLocalsMap?: Map<string, string[]>,
+  localToGlobalMap?: Map<string, string>,
+  keyToEbisuMap?: Map<string, ebisu.Ebisu>,
+  keyToQuizzableMap?: Map<string, Card|Fill>,
+  keyTree?: string[][],
+}): KeyToQuiz&KeyToEbisu&LocalToFromGlobal&KeyTree {
+  return {
+    globalToLocalsMap: globalToLocalsMap || new Map(), localToGlobalMap: localToGlobalMap || new Map(),
+        keyToEbisuMap: keyToEbisuMap || new Map(), keyToQuizzableMap: keyToQuizzableMap || new Map(),
+        keyTree: keyTree || []
+  }
+}
 
 function fillToString(fill: Fill): string[] {
   let pieces = ['@fill' as string | null].concat(fill.contexts);
@@ -12,12 +43,13 @@ function fillToString(fill: Fill): string[] {
 }
 
 function addQuizzableToMaps(
-    q: Card,
-    keyToQuizzableMap: Map<string, Card|Fill>,
-    globalToLocalsMap: Map<string, string[]>,
-    localToGlobalMap: Map<string, string>,
-) {
-  const push = (vkey: string[], o: Card|Fill) => keyToQuizzableMap.set(JSON.stringify(vkey), o);
+    q: Card, {keyToQuizzableMap, globalToLocalsMap, localToGlobalMap, keyTree}: LocalToFromGlobal&KeyToQuiz&KeyTree) {
+  let allKeysFound: string[] = [];
+  const push = (vkey: string[], o: Card|Fill) => {
+    const key = JSON.stringify(vkey);
+    if (!keyToQuizzableMap.has(key)) { allKeysFound.push(key); }
+    keyToQuizzableMap.set(key, o);
+  };
   const graphPush = (vglobal: string[], vlocal: string[]) => {
     const global = JSON.stringify(vglobal);
     const local = JSON.stringify(vlocal);
@@ -38,30 +70,19 @@ function addQuizzableToMaps(
       graphPush(global, totalLocal);
     }
   }
+  if (allKeysFound.length > 0) { keyTree.push(allKeysFound); }
 }
 
-export function loadQuizzes(qs: Card[], {keyToQuizzableMap, globalToLocalsMap, localToGlobalMap}: {
-  keyToQuizzableMap?: Map<string, Card|Fill>,
-  globalToLocalsMap?: Map<string, string[]>,
-  localToGlobalMap?: Map<string, string>
-}) {
-  let k2q: Map<string, Card|Fill> = keyToQuizzableMap || new Map();
-  let g2l: Map<string, string[]> = globalToLocalsMap || new Map();
-  let l2g: Map<string, string> = localToGlobalMap || new Map();
-  for (const q of qs) { addQuizzableToMaps(q, k2q, g2l, l2g) }
-  return {keyToQuizzableMap: k2q, globalToLocalsMap: g2l, localToGlobalMap: l2g};
+export function loadQuizzes(qs: Card[], quizDb: LocalToFromGlobal&KeyToQuiz&KeyTree) {
+  for (const q of qs) { addQuizzableToMaps(q, quizDb) }
 }
 
-export function whichToQuiz(
-    keyToEbisu: Map<string, ebisu.Ebisu>,
-    keyToQuizzableMap: Map<string, Card|Fill>,
-    date?: Date,
-) {
+export function whichToQuiz({keyToEbisuMap, keyToQuizzableMap}: KeyToEbisu&KeyToQuiz, date?: Date) {
   let ret = {quiz: undefined as undefined | Card | Fill, key: ''};
   let lowestPrecall = Infinity;
   date = date || new Date();
   for (let [key, q] of keyToQuizzableMap) {
-    let e = keyToEbisu.get(key);
+    let e = keyToEbisuMap.get(key);
     if (e) {
       const precall = ebisu.predict(e, date);
       if (precall < lowestPrecall) {
@@ -74,18 +95,13 @@ export function whichToQuiz(
   return ret;
 }
 
-export function updateQuiz(
-    result: boolean,
-    key: string,
-    keyToEbisu: Map<string, ebisu.Ebisu>,
-    globalToLocalsMap: Map<string, string[]>,
-    localToGlobalMap: Map<string, string>,
-    date?: Date,
-) {
+export function updateQuiz(result: boolean, key: string,
+                           {keyToEbisuMap, globalToLocalsMap, localToGlobalMap}: LocalToFromGlobal&KeyToEbisu,
+                           date?: Date) {
   date = date || new Date();
   const updater = (key: string, passive: boolean = false) => {
-    let e = keyToEbisu.get(key);
-    if (!e) { throw new Error('key not found in Ebisu table'); }
+    let e = keyToEbisuMap.get(key);
+    if (!e) { return; }
     if (passive) {
       ebisu.passiveUpdate(e, date);
     } else {
@@ -103,5 +119,22 @@ export function updateQuiz(
 
     // then active-update all other locals
     for (const child of (globalToLocalsMap.get(parent) || [])) { updater(child); }
+  }
+}
+
+export function learnQuizzes(
+    keys: string[]|IterableIterator<string>,
+    {keyToEbisuMap}: KeyToEbisu,
+    date?: Date,
+    opts: {halflifeScale?: number, halflifeScales?: number[], alphaBeta?: number} = {},
+) {
+  date = date || new Date();
+  for (const [kidx, key] of enumerate(keys)) {
+    if (!keyToEbisuMap.has(key)) {
+      const scalar = (opts.halflifeScales && opts.halflifeScales[kidx]) || opts.halflifeScale || 1;
+      const e =
+          ebisu.defaultEbisu(scalar * DEFAULT_EBISU_HALFLIFE_HOURS, opts.alphaBeta || DEFAULT_EBISU_ALPHA_BETA, date);
+      keyToEbisuMap.set(key, e);
+    }
   }
 }
