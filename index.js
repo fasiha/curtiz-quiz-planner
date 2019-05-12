@@ -73,18 +73,15 @@ function whichToQuiz({ keyToEbisuMap, keyToQuizzableMap }, date) {
     let ret = { quiz: undefined, key: '' };
     let lowestPrecall = Infinity;
     date = date || new Date();
-    for (let [key, q] of keyToQuizzableMap) {
-        let e = keyToEbisuMap.get(key);
-        if (e) {
-            const precall = ebisu.predict(e, date);
-            if (precall < lowestPrecall) {
-                lowestPrecall = precall;
-                ret.quiz = q;
-                ret.key = key;
-            }
+    for (const [key, e] of keyToEbisuMap) {
+        const precall = ebisu.predict(e, date);
+        if (precall < lowestPrecall) {
+            lowestPrecall = precall;
+            ret.quiz = keyToQuizzableMap.get(key);
+            ret.key = key;
         }
     }
-    return ret;
+    return (ret.quiz && ret.key) ? { quiz: ret.quiz, key: ret.key } : undefined; // TypeScript pacification
 }
 exports.whichToQuiz = whichToQuiz;
 function updateQuiz(result, key, { keyToEbisuMap, globalToLocalsMap, localToGlobalMap }, date) {

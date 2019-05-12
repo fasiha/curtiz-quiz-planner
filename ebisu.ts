@@ -11,8 +11,8 @@ export function predict(ebisu: Ebisu, d?: Date): number {
   return ebisujs.predictRecall(ebisu.model, elapsedHours(ebisu.lastDate, d));
 }
 export function update(ebisu: Ebisu, result: boolean, d?: Date): Ebisu {
+  ebisu.model = ebisujs.updateRecall(ebisu.model, result, elapsedHours(ebisu.lastDate, d));
   ebisu.lastDate = d || new Date();
-  ebisu.model = ebisujs.updateRecall(ebisu.model, result, elapsedHours(ebisu.lastDate, ebisu.lastDate));
   return ebisu;
 }
 export function passiveUpdate(ebisu: Ebisu, d?: Date): Ebisu {

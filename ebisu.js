@@ -10,8 +10,8 @@ function predict(ebisu, d) {
 }
 exports.predict = predict;
 function update(ebisu, result, d) {
+    ebisu.model = ebisujs.updateRecall(ebisu.model, result, elapsedHours(ebisu.lastDate, d));
     ebisu.lastDate = d || new Date();
-    ebisu.model = ebisujs.updateRecall(ebisu.model, result, elapsedHours(ebisu.lastDate, ebisu.lastDate));
     return ebisu;
 }
 exports.update = update;

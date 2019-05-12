@@ -77,22 +77,20 @@ export function loadQuizzes(qs: Card[], quizDb: LocalToFromGlobal&KeyToQuiz&KeyT
   for (const q of qs) { addQuizzableToMaps(q, quizDb) }
 }
 
-export function whichToQuiz({keyToEbisuMap, keyToQuizzableMap}: KeyToEbisu&KeyToQuiz, date?: Date) {
+export function whichToQuiz({keyToEbisuMap, keyToQuizzableMap}: KeyToEbisu&KeyToQuiz,
+                            date?: Date): {quiz: Card|Fill, key: string}|undefined {
   let ret = {quiz: undefined as undefined | Card | Fill, key: ''};
   let lowestPrecall = Infinity;
   date = date || new Date();
-  for (let [key, q] of keyToQuizzableMap) {
-    let e = keyToEbisuMap.get(key);
-    if (e) {
-      const precall = ebisu.predict(e, date);
-      if (precall < lowestPrecall) {
-        lowestPrecall = precall;
-        ret.quiz = q;
-        ret.key = key;
-      }
+  for (const [key, e] of keyToEbisuMap) {
+    const precall = ebisu.predict(e, date);
+    if (precall < lowestPrecall) {
+      lowestPrecall = precall;
+      ret.quiz = keyToQuizzableMap.get(key);
+      ret.key = key;
     }
   }
-  return ret;
+  return (ret.quiz && ret.key) ? {quiz: ret.quiz, key: ret.key} : undefined; // TypeScript pacification
 }
 
 export function updateQuiz(result: boolean, key: string,

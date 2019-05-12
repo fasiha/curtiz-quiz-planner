@@ -17,6 +17,6 @@
   "dependencies": {
     "curtiz-parse-markdown": "git+https://github.com/fasiha/curtiz-parse-markdown.git",
     "curtiz-utils": "git+https://github.com/fasiha/curtiz-utils.git",
-    "ebisu-js": "^0.5.6"
+    "ebisu-js": "^0.5.7"
   }
 }
