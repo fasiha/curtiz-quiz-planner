@@ -65,7 +65,6 @@ test('learn', t => {
 
   t.end();
 });
-/*
 test('which to quiz', t => {
   let s = `## @ 千と千尋の神隠し @ せんとちひろのかみがくし
 - @fill と
@@ -83,26 +82,24 @@ test('which to quiz', t => {
 - @ 人々 @ ひとびと    @pos noun-common-general @omit 人びと
 ## @ 湯婆婆 @ ゆばーば
 - @ 湯婆婆 @ ゆばーば    @pos noun-proper-name-general`;
-  let cards = markdown.textToCards(s);
-  let db = quizzer.initQuizDb({});
-  quizzer.loadQuizzes(cards, db);
+  let graph = quizzer.addEmptyEbisus(markdown.textToGraph(s));
 
   {
-    const q = quizzer.whichToQuiz(db);
+    const q = quizzer.whichToQuiz(graph);
     t.notok(q);
   }
 
-  let keys = db.keyTree[0];
+  let allKeys = flatMap([...graph.raws.values()], set => [...set.values()]);
+  let keys = allKeys.slice(0, 5);
+
   let date = new Date();
-  quizzer.learnQuizzes(keys, db);
+  quizzer.learnQuizzes(keys, graph);
 
   {
-    const q = quizzer.whichToQuiz(db, new Date(date.valueOf() + 60 * 15 * 1e3));
-    t.ok(q.quiz);
-    t.ok(q.key);
-    t.ok(db.ebisus.has(q.key));
-    t.ok(db.keyToQuizzableMap.has(q.key));
-    t.equal(db.keyToQuizzableMap.get(q.key), q.quiz);
+    const q = quizzer.whichToQuiz(graph, new Date(date.valueOf() + 60 * 15 * 1e3));
+    t.ok(q);
+    t.ok(graph.ebisus.has(q.uniqueId));
+    t.ok(graph.nodes.has(q.uniqueId));
   }
   t.end();
 });
@@ -124,36 +121,36 @@ test('update', t => {
 - @ 人々 @ ひとびと    @pos noun-common-general @omit 人びと
 ## @ 湯婆婆 @ ゆばーば
 - @ 湯婆婆 @ ゆばーば    @pos noun-proper-name-general`;
-  let cards = markdown.textToCards(s);
-  let db = quizzer.initQuizDb({});
-  quizzer.loadQuizzes(cards, db);
-  let keys = db.keyTree[0];
+  let graph = quizzer.addEmptyEbisus(markdown.textToGraph(s));
+  let allKeys = flatMap([...graph.raws.values()], set => [...set.values()]);
   let date = new Date();
-  quizzer.learnQuizzes(keys, db, date, {alphaBeta: 2});
+  quizzer.learnQuizzes(allKeys.slice(0, 5), graph, date, {alphaBeta: 2});
 
-  const key = '["千","せん"]';
-  const newDate = new Date(date.valueOf() + 1000 * 60 * 15);
-  quizzer.updateQuiz(true, key, db, newDate);
+  const hl = quizzer.DEFAULT_EBISU_HALFLIFE_HOURS;
+
+  const keyset = graph.raws.get('## @ 千と千尋の神隠し @ せんとちひろのかみがくし');
+  t.ok(keyset);
+  const key = [...keyset.values()][0];
+  t.ok(key);
+  const newDate = new Date(date.valueOf() + 1000 * 3600 * hl);
+  quizzer.updateQuiz(true, key, graph, newDate);
 
   // confirm the flashcard quiz itself was updated
   {
-    const globalEbisu = db.ebisus.get(key);
-    t.equal(globalEbisu.lastDate, newDate);
-    t.ok(relativeError(globalEbisu.model[0], 3) < 1e-6);
-    t.ok(relativeError(globalEbisu.model[1], 2) < 1e-6);
+    const ebisu = graph.ebisus.get(key);
+    t.equal(ebisu.lastDate, newDate);
+    t.ok(relativeError(ebisu.model[0], 3) < 1e-6);
+    t.ok(relativeError(ebisu.model[1], 2) < 1e-6);
   }
 
-  // confirm that the local quiz was updated the same way too, since quizzing the global (without any context) is harder
-  // than quizzing local (with fill-in-the-blank reading)
-  const locals = db.globalToLocalsMap.get(key);
-  t.equal(locals.length, 1);
+  // passive update: same as before
+  const childKey = [...graph.raws.get('## @ 千と千尋の神隠し @ せんとちひろのかみがくし\n- @fill と')][0];
   {
-    const localEbisu = db.ebisus.get(locals[0]);
-    t.equal(localEbisu.lastDate, newDate);
-    t.ok(relativeError(localEbisu.model[0], 3) < 1e-6);
-    t.ok(relativeError(localEbisu.model[1], 2) < 1e-6);
+    const childEbisu = graph.ebisus.get(childKey);
+    t.equal(childEbisu.lastDate, newDate);
+    t.ok(relativeError(childEbisu.model[0], 2) < 1e-6);
+    t.ok(relativeError(childEbisu.model[1], 2) < 1e-6);
   }
 
   t.end();
 });
-*/
