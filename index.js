@@ -9,6 +9,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const curtiz_utils_1 = require("curtiz-utils");
 const ebisu = __importStar(require("./ebisu"));
+exports.ebisu = ebisu;
 function addEmptyEbisus(graph) { return Object.assign({}, graph, { ebisus: new Map() }); }
 exports.addEmptyEbisus = addEmptyEbisus;
 exports.DEFAULT_EBISU_ALPHA_BETA = 2;

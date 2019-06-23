@@ -3,7 +3,7 @@ import {enumerate} from 'curtiz-utils';
 
 import * as ebisu from './ebisu';
 
-// type QuizGraph = GenericGraph<Quiz>;
+export {ebisu};
 export interface KeyToEbisu {
   ebisus: Map<string, ebisu.Ebisu>;
 }
