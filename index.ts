@@ -4,7 +4,7 @@ import {enumerate} from 'curtiz-utils';
 import * as ebisu from './ebisu';
 
 // type QuizGraph = GenericGraph<Quiz>;
-interface KeyToEbisu {
+export interface KeyToEbisu {
   ebisus: Map<string, ebisu.Ebisu>;
 }
 export function addEmptyEbisus(graph: QuizGraph): QuizGraph&KeyToEbisu { return {...graph, ebisus: new Map()}; }
