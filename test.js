@@ -153,3 +153,49 @@ test('update', t => {
 
   t.end();
 });
+
+test('verify passive updates', t => {
+  let s = `## @ 千と千尋の神隠し @ せんとちひろのかみがくし
+- @fill と
+- @fill の
+- @ 千 @ せん    @pos noun-proper-name-firstname @omit [千]と
+- @ 千尋 @ ちひろ    @pos noun-proper-name-firstname
+- @ 神隠し @ かみがくし    @pos noun-common-general
+- @translation @en Spirited Away (film)`;
+  let graph = quizzer.addEmptyEbisus(markdown.textToGraph(s));
+  const raw = `## @ 千と千尋の神隠し @ せんとちひろのかみがくし
+- @ 千 @ せん    @pos noun-proper-name-firstname @omit [千]と`;
+  const keys = graph.raws.get(raw);
+  const date = new Date();
+  for (const key of keys) { quizzer.learnQuiz(key, graph, {date}); }
+  t.equal(graph.ebisus.size, keys.size);
+  t.equal(graph.ebisus.size, 3);
+
+  for (const key of keys) {
+    const edges = graph.edges.get(key);
+    t.ok(edges);
+    t.equal(edges.size, 2); // each is connected to other 2
+  }
+
+  // simulate quiz at halflife
+  const qdate = new Date(date.valueOf() + quizzer.DEFAULT_EBISU_HALFLIFE_HOURS * 3600 * 1000);
+  const qkey = [...keys][0];
+  quizzer.updateQuiz(false, qkey, graph, {date: qdate});
+
+  // ensure that one quiz has beta incremented by one but rest have original alpha/beta.
+  // ensure that all have same date.
+  const ab = quizzer.DEFAULT_EBISU_ALPHA_BETA;
+  for (const key of keys) {
+    const ebisu = graph.ebisus.get(key)
+    t.equal(ebisu.lastDate.valueOf(), qdate.valueOf());
+    if (key === qkey) {
+      t.ok(relativeError(ebisu.model[0], ab) < 1e-6);
+      t.ok(relativeError(ebisu.model[1], ab + 1) < 1e-6);
+    } else {
+      t.equal(ebisu.model[0], ab);
+      t.equal(ebisu.model[0], ab);
+    }
+  }
+
+  t.end();
+});
