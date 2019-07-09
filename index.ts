@@ -53,8 +53,8 @@ export function updateQuiz(result: boolean, key: string, {ebisus, edges}: KeyToE
   }
 }
 
-export type LearnQuizzesOpts = Partial<{date: Date, halflife: number, alphaBeta: number}>;
-export function learnQuizzes(key: string, {ebisus}: KeyToEbisu, {date, halflife, alphaBeta}: LearnQuizzesOpts = {}) {
+export type LearnQuizOpts = Partial<{date: Date, halflife: number, alphaBeta: number}>;
+export function learnQuiz(key: string, {ebisus}: KeyToEbisu, {date, halflife, alphaBeta}: LearnQuizOpts = {}) {
   if (!ebisus.has(key)) {
     date = date || new Date();
     halflife = halflife || DEFAULT_EBISU_HALFLIFE_HOURS;

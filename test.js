@@ -31,7 +31,7 @@ test('learn', t => {
   const ab = quizzer.DEFAULT_EBISU_ALPHA_BETA;
   const date = new Date(Date.now() - 100e3);
 
-  for (const key of allKeys.slice(0, 3)) { quizzer.learnQuizzes(key, graph, {date, halflife: 1.5, alphaBeta: ab}); }
+  for (const key of allKeys.slice(0, 3)) { quizzer.learnQuiz(key, graph, {date, halflife: 1.5, alphaBeta: ab}); }
   // p(graph);
   t.equal(graph.ebisus.size, 3, 'ebisus size = keys size');
 
@@ -40,8 +40,8 @@ test('learn', t => {
     t.equal(ebisu.lastDate, date);
   }
 
-  quizzer.learnQuizzes(allKeys[3], graph, {halflife: 2, alphaBeta: 4});
-  quizzer.learnQuizzes(allKeys[4], graph, {halflife: 3, alphaBeta: 5});
+  quizzer.learnQuiz(allKeys[3], graph, {halflife: 2, alphaBeta: 4});
+  quizzer.learnQuiz(allKeys[4], graph, {halflife: 3, alphaBeta: 5});
   t.equal(graph.ebisus.size, 5);
 
   for (const [key, ebisu] of graph.ebisus) {
@@ -55,7 +55,7 @@ test('learn', t => {
     }
   }
 
-  quizzer.learnQuizzes(allKeys[5], graph);
+  quizzer.learnQuiz(allKeys[5], graph);
   {
     const ebisu = graph.ebisus.get(allKeys[5]);
     t.ok(ebisu);
@@ -91,7 +91,7 @@ test('which to quiz', t => {
   let allKeys = flatMap([...graph.raws.values()], set => [...set.values()]);
 
   let date = new Date();
-  quizzer.learnQuizzes(allKeys[0], graph);
+  quizzer.learnQuiz(allKeys[0], graph);
 
   {
     const q = quizzer.whichToQuiz(graph, {date: new Date(date.valueOf() + 60 * 15 * 1e3)});
@@ -122,7 +122,7 @@ test('update', t => {
   let graph = quizzer.addEmptyEbisus(markdown.textToGraph(s));
   let allKeys = flatMap([...graph.raws.values()], set => [...set.values()]);
   let date = new Date();
-  for (const key of allKeys.slice(0, 5)) { quizzer.learnQuizzes(key, graph, {date, alphaBeta: 2}); }
+  for (const key of allKeys.slice(0, 5)) { quizzer.learnQuiz(key, graph, {date, alphaBeta: 2}); }
   t.equal(graph.ebisus.size, 5);
   const hl = quizzer.DEFAULT_EBISU_HALFLIFE_HOURS;
 

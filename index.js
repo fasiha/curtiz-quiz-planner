@@ -59,7 +59,7 @@ function updateQuiz(result, key, { ebisus, edges }, { date, callback } = {}) {
     }
 }
 exports.updateQuiz = updateQuiz;
-function learnQuizzes(key, { ebisus }, { date, halflife, alphaBeta } = {}) {
+function learnQuiz(key, { ebisus }, { date, halflife, alphaBeta } = {}) {
     if (!ebisus.has(key)) {
         date = date || new Date();
         halflife = halflife || exports.DEFAULT_EBISU_HALFLIFE_HOURS;
@@ -67,4 +67,4 @@ function learnQuizzes(key, { ebisus }, { date, halflife, alphaBeta } = {}) {
         ebisus.set(key, e);
     }
 }
-exports.learnQuizzes = learnQuizzes;
+exports.learnQuiz = learnQuiz;
