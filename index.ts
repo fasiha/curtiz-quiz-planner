@@ -14,7 +14,8 @@ export const DEFAULT_EBISU_HALFLIFE_HOURS = 0.25;
 
 export type WhichToQuizOpts =
     Partial<{date: Date, details: {out: {key?: string, precall?: number, model?: number[], date?: Date}[]}}>;
-export function whichToQuiz({ebisus, nodes}: KeyToEbisu&QuizGraph, {date, details}: WhichToQuizOpts): Quiz|undefined {
+export function whichToQuiz({ebisus, nodes}: KeyToEbisu&QuizGraph, {date, details}: WhichToQuizOpts = {}): Quiz|
+    undefined {
   let quiz: Quiz|undefined;
   let lowestPrecall = Infinity;
   date = date || new Date();
@@ -32,7 +33,7 @@ export function whichToQuiz({ebisus, nodes}: KeyToEbisu&QuizGraph, {date, detail
 
 export type UpdateQuizOpts = Partial<{date: Date, callback: (key: string, ebisu: ebisu.Ebisu) => any}>;
 export function updateQuiz(result: boolean, key: string, {ebisus, edges}: KeyToEbisu&QuizGraph,
-                           {date, callback}: UpdateQuizOpts) {
+                           {date, callback}: UpdateQuizOpts = {}) {
   date = date || new Date();
   const updater = (key: string, passive: boolean = false) => {
     let e = ebisus.get(key);
@@ -52,16 +53,12 @@ export function updateQuiz(result: boolean, key: string, {ebisus, edges}: KeyToE
   }
 }
 
-export type LearnQuizzesOpts =
-    Partial<{date: Date, halflifeScale: number, halflifeScales: number[], alphaBeta: number}>;
-export function learnQuizzes(keys: string[]|IterableIterator<string>, {ebisus}: KeyToEbisu,
-                             {date, halflifeScale, halflifeScales, alphaBeta}: LearnQuizzesOpts) {
-  date = date || new Date();
-  for (const [kidx, key] of enumerate(keys)) {
-    if (!ebisus.has(key)) {
-      const scalar = (halflifeScales && halflifeScales[kidx]) || halflifeScale || 1;
-      const e = ebisu.defaultEbisu(scalar * DEFAULT_EBISU_HALFLIFE_HOURS, alphaBeta || DEFAULT_EBISU_ALPHA_BETA, date);
-      ebisus.set(key, e);
-    }
+export type LearnQuizzesOpts = Partial<{date: Date, halflife: number, alphaBeta: number}>;
+export function learnQuizzes(key: string, {ebisus}: KeyToEbisu, {date, halflife, alphaBeta}: LearnQuizzesOpts = {}) {
+  if (!ebisus.has(key)) {
+    date = date || new Date();
+    halflife = halflife || DEFAULT_EBISU_HALFLIFE_HOURS;
+    const e = ebisu.defaultEbisu(halflife, alphaBeta || DEFAULT_EBISU_ALPHA_BETA, date);
+    ebisus.set(key, e);
   }
 }

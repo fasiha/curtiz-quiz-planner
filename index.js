@@ -7,14 +7,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const curtiz_utils_1 = require("curtiz-utils");
 const ebisu = __importStar(require("./ebisu"));
 exports.ebisu = ebisu;
 function addEmptyEbisus(graph) { return Object.assign({}, graph, { ebisus: new Map() }); }
 exports.addEmptyEbisus = addEmptyEbisus;
 exports.DEFAULT_EBISU_ALPHA_BETA = 2;
 exports.DEFAULT_EBISU_HALFLIFE_HOURS = 0.25;
-function whichToQuiz({ ebisus, nodes }, { date, details }) {
+function whichToQuiz({ ebisus, nodes }, { date, details } = {}) {
     let quiz;
     let lowestPrecall = Infinity;
     date = date || new Date();
@@ -34,7 +33,7 @@ function whichToQuiz({ ebisus, nodes }, { date, details }) {
     return quiz;
 }
 exports.whichToQuiz = whichToQuiz;
-function updateQuiz(result, key, { ebisus, edges }, { date, callback }) {
+function updateQuiz(result, key, { ebisus, edges }, { date, callback } = {}) {
     date = date || new Date();
     const updater = (key, passive = false) => {
         let e = ebisus.get(key);
@@ -60,14 +59,12 @@ function updateQuiz(result, key, { ebisus, edges }, { date, callback }) {
     }
 }
 exports.updateQuiz = updateQuiz;
-function learnQuizzes(keys, { ebisus }, { date, halflifeScale, halflifeScales, alphaBeta }) {
-    date = date || new Date();
-    for (const [kidx, key] of curtiz_utils_1.enumerate(keys)) {
-        if (!ebisus.has(key)) {
-            const scalar = (halflifeScales && halflifeScales[kidx]) || halflifeScale || 1;
-            const e = ebisu.defaultEbisu(scalar * exports.DEFAULT_EBISU_HALFLIFE_HOURS, alphaBeta || exports.DEFAULT_EBISU_ALPHA_BETA, date);
-            ebisus.set(key, e);
-        }
+function learnQuizzes(key, { ebisus }, { date, halflife, alphaBeta } = {}) {
+    if (!ebisus.has(key)) {
+        date = date || new Date();
+        halflife = halflife || exports.DEFAULT_EBISU_HALFLIFE_HOURS;
+        const e = ebisu.defaultEbisu(halflife, alphaBeta || exports.DEFAULT_EBISU_ALPHA_BETA, date);
+        ebisus.set(key, e);
     }
 }
 exports.learnQuizzes = learnQuizzes;

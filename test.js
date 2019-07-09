@@ -29,40 +29,39 @@ test('learn', t => {
 
   const hl = quizzer.DEFAULT_EBISU_HALFLIFE_HOURS;
   const ab = quizzer.DEFAULT_EBISU_ALPHA_BETA;
-  const myAlphaBeta = 3;
-  const date = new Date();
+  const date = new Date(Date.now() - 100e3);
 
-  quizzer.learnQuizzes(allKeys.slice(0, 3), graph, date, {halflifeScale: 1.5, alphaBeta: myAlphaBeta});
+  for (const key of allKeys.slice(0, 3)) { quizzer.learnQuizzes(key, graph, {date, halflife: 1.5, alphaBeta: ab}); }
   // p(graph);
   t.equal(graph.ebisus.size, 3, 'ebisus size = keys size');
 
   for (const ebisu of graph.ebisus.values()) {
-    t.deepEqual(ebisu.model, [myAlphaBeta, myAlphaBeta, hl * 1.5]);
+    t.deepEqual(ebisu.model, [ab, ab, 1.5]);
     t.equal(ebisu.lastDate, date);
   }
 
-  quizzer.learnQuizzes(allKeys.slice(3, 5), graph, undefined, {halflifeScales: [2, 3]});
+  quizzer.learnQuizzes(allKeys[3], graph, {halflife: 2, alphaBeta: 4});
+  quizzer.learnQuizzes(allKeys[4], graph, {halflife: 3, alphaBeta: 5});
   t.equal(graph.ebisus.size, 5);
 
   for (const [key, ebisu] of graph.ebisus) {
     if (key === allKeys[3] || key === allKeys[4]) {
       if (key === allKeys[3]) {
-        t.deepEqual(ebisu.model, [ab, ab, hl * 2]);
+        t.deepEqual(ebisu.model, [4, 4, 2]);
       } else {
-        t.deepEqual(ebisu.model, [ab, ab, hl * 3]);
+        t.deepEqual(ebisu.model, [5, 5, 3]);
       }
       t.notEqual(ebisu.lastDate, date);
     }
   }
 
-  quizzer.learnQuizzes([allKeys[5]], graph);
+  quizzer.learnQuizzes(allKeys[5], graph);
   {
     const ebisu = graph.ebisus.get(allKeys[5]);
     t.ok(ebisu);
     t.deepEqual(ebisu.model, [ab, ab, hl]);
     t.notEqual(ebisu.lastDate, date);
   }
-
   t.end();
 });
 test('which to quiz', t => {
@@ -90,13 +89,12 @@ test('which to quiz', t => {
   }
 
   let allKeys = flatMap([...graph.raws.values()], set => [...set.values()]);
-  let keys = allKeys.slice(0, 5);
 
   let date = new Date();
-  quizzer.learnQuizzes(keys, graph);
+  quizzer.learnQuizzes(allKeys[0], graph);
 
   {
-    const q = quizzer.whichToQuiz(graph, new Date(date.valueOf() + 60 * 15 * 1e3));
+    const q = quizzer.whichToQuiz(graph, {date: new Date(date.valueOf() + 60 * 15 * 1e3)});
     t.ok(q);
     t.ok(graph.ebisus.has(q.uniqueId));
     t.ok(graph.nodes.has(q.uniqueId));
@@ -124,20 +122,21 @@ test('update', t => {
   let graph = quizzer.addEmptyEbisus(markdown.textToGraph(s));
   let allKeys = flatMap([...graph.raws.values()], set => [...set.values()]);
   let date = new Date();
-  quizzer.learnQuizzes(allKeys.slice(0, 5), graph, date, {alphaBeta: 2});
-
+  for (const key of allKeys.slice(0, 5)) { quizzer.learnQuizzes(key, graph, {date, alphaBeta: 2}); }
+  t.equal(graph.ebisus.size, 5);
   const hl = quizzer.DEFAULT_EBISU_HALFLIFE_HOURS;
 
   const keyset = graph.raws.get('## @ 千と千尋の神隠し @ せんとちひろのかみがくし');
-  t.ok(keyset);
+  t.ok(keyset.size);
   const key = [...keyset.values()][0];
   t.ok(key);
   const newDate = new Date(date.valueOf() + 1000 * 3600 * hl);
-  quizzer.updateQuiz(true, key, graph, newDate);
+  quizzer.updateQuiz(true, key, graph, {date: newDate}); // simulate quiz exactly at halflife
 
   // confirm the flashcard quiz itself was updated
   {
     const ebisu = graph.ebisus.get(key);
+    t.ok(ebisu);
     t.equal(ebisu.lastDate, newDate);
     t.ok(relativeError(ebisu.model[0], 3) < 1e-6);
     t.ok(relativeError(ebisu.model[1], 2) < 1e-6);
