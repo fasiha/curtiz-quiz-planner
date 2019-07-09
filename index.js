@@ -14,15 +14,21 @@ function addEmptyEbisus(graph) { return Object.assign({}, graph, { ebisus: new M
 exports.addEmptyEbisus = addEmptyEbisus;
 exports.DEFAULT_EBISU_ALPHA_BETA = 2;
 exports.DEFAULT_EBISU_HALFLIFE_HOURS = 0.25;
-function whichToQuiz({ ebisus, nodes }, date) {
+function whichToQuiz({ ebisus, nodes }, date, details) {
     let quiz;
     let lowestPrecall = Infinity;
     date = date || new Date();
+    if (details) {
+        details.out = [];
+    }
     for (const [key, e] of ebisus) {
         const precall = ebisu.predict(e, date);
         if (precall < lowestPrecall) {
             lowestPrecall = precall;
             quiz = nodes.get(key);
+        }
+        if (details) {
+            details.out.push({ key, precall, model: e.model, date });
         }
     }
     return quiz;

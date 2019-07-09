@@ -12,16 +12,20 @@ export function addEmptyEbisus(graph: QuizGraph): QuizGraph&KeyToEbisu { return 
 export const DEFAULT_EBISU_ALPHA_BETA = 2;
 export const DEFAULT_EBISU_HALFLIFE_HOURS = 0.25;
 
-export function whichToQuiz({ebisus, nodes}: KeyToEbisu&QuizGraph, date?: Date): Quiz|undefined {
+export function whichToQuiz({ebisus, nodes}: KeyToEbisu&QuizGraph, date?: Date,
+                            details?: {out: {key?: string, precall?: number, model?: number[], date?: Date}[]}): Quiz|
+    undefined {
   let quiz: Quiz|undefined;
   let lowestPrecall = Infinity;
   date = date || new Date();
+  if (details) { details.out = []; }
   for (const [key, e] of ebisus) {
     const precall = ebisu.predict(e, date);
     if (precall < lowestPrecall) {
       lowestPrecall = precall;
       quiz = nodes.get(key);
     }
+    if (details) { details.out.push({key, precall, model: e.model, date}); }
   }
   return quiz;
 }
