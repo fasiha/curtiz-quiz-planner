@@ -14,7 +14,7 @@ function addEmptyEbisus(graph) { return Object.assign({}, graph, { ebisus: new M
 exports.addEmptyEbisus = addEmptyEbisus;
 exports.DEFAULT_EBISU_ALPHA_BETA = 2;
 exports.DEFAULT_EBISU_HALFLIFE_HOURS = 0.25;
-function whichToQuiz({ ebisus, nodes }, date, details) {
+function whichToQuiz({ ebisus, nodes }, { date, details }) {
     let quiz;
     let lowestPrecall = Infinity;
     date = date || new Date();
@@ -34,7 +34,7 @@ function whichToQuiz({ ebisus, nodes }, date, details) {
     return quiz;
 }
 exports.whichToQuiz = whichToQuiz;
-function updateQuiz(result, key, { ebisus, edges }, date) {
+function updateQuiz(result, key, { ebisus, edges }, { date, callback }) {
     date = date || new Date();
     const updater = (key, passive = false) => {
         let e = ebisus.get(key);
@@ -47,6 +47,9 @@ function updateQuiz(result, key, { ebisus, edges }, date) {
         else {
             ebisu.update(e, result, date);
         }
+        if (callback) {
+            callback(key, e);
+        }
     };
     updater(key);
     const children = edges.get(key);
@@ -57,12 +60,12 @@ function updateQuiz(result, key, { ebisus, edges }, date) {
     }
 }
 exports.updateQuiz = updateQuiz;
-function learnQuizzes(keys, { ebisus }, date, opts = {}) {
+function learnQuizzes(keys, { ebisus }, { date, halflifeScale, halflifeScales, alphaBeta }) {
     date = date || new Date();
     for (const [kidx, key] of curtiz_utils_1.enumerate(keys)) {
         if (!ebisus.has(key)) {
-            const scalar = (opts.halflifeScales && opts.halflifeScales[kidx]) || opts.halflifeScale || 1;
-            const e = ebisu.defaultEbisu(scalar * exports.DEFAULT_EBISU_HALFLIFE_HOURS, opts.alphaBeta || exports.DEFAULT_EBISU_ALPHA_BETA, date);
+            const scalar = (halflifeScales && halflifeScales[kidx]) || halflifeScale || 1;
+            const e = ebisu.defaultEbisu(scalar * exports.DEFAULT_EBISU_HALFLIFE_HOURS, alphaBeta || exports.DEFAULT_EBISU_ALPHA_BETA, date);
             ebisus.set(key, e);
         }
     }
