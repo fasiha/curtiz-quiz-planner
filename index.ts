@@ -12,7 +12,7 @@ export function addEmptyEbisus(graph: QuizGraph): QuizGraph&KeyToEbisu { return 
 export const DEFAULT_EBISU_ALPHA_BETA = 2;
 export const DEFAULT_EBISU_HALFLIFE_HOURS = 0.25;
 
-type WhichToQuizOpts =
+export type WhichToQuizOpts =
     Partial<{date: Date, details: {out: {key?: string, precall?: number, model?: number[], date?: Date}[]}}>;
 export function whichToQuiz({ebisus, nodes}: KeyToEbisu&QuizGraph, {date, details}: WhichToQuizOpts): Quiz|undefined {
   let quiz: Quiz|undefined;
@@ -30,7 +30,7 @@ export function whichToQuiz({ebisus, nodes}: KeyToEbisu&QuizGraph, {date, detail
   return quiz;
 }
 
-type UpdateQuizOpts = Partial<{date: Date, callback: (key: string, ebisu: ebisu.Ebisu) => any}>;
+export type UpdateQuizOpts = Partial<{date: Date, callback: (key: string, ebisu: ebisu.Ebisu) => any}>;
 export function updateQuiz(result: boolean, key: string, {ebisus, edges}: KeyToEbisu&QuizGraph,
                            {date, callback}: UpdateQuizOpts) {
   date = date || new Date();
@@ -52,7 +52,8 @@ export function updateQuiz(result: boolean, key: string, {ebisus, edges}: KeyToE
   }
 }
 
-type LearnQuizzesOpts = Partial<{date: Date, halflifeScale: number, halflifeScales: number[], alphaBeta: number}>;
+export type LearnQuizzesOpts =
+    Partial<{date: Date, halflifeScale: number, halflifeScales: number[], alphaBeta: number}>;
 export function learnQuizzes(keys: string[]|IterableIterator<string>, {ebisus}: KeyToEbisu,
                              {date, halflifeScale, halflifeScales, alphaBeta}: LearnQuizzesOpts) {
   date = date || new Date();
