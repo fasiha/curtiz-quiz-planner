@@ -21,6 +21,7 @@ export function whichToQuiz({ebisus, nodes}: KeyToEbisu&QuizGraph, {date, detail
   date = date || new Date();
   if (details) { details.out = []; }
   for (const [key, e] of ebisus) {
+    if (!nodes.has(key)) { continue; }
     const precall = ebisu.predict(e, date);
     if (precall < lowestPrecall) {
       lowestPrecall = precall;
